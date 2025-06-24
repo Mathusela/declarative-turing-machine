@@ -1,6 +1,9 @@
 # declarative-turing-machine
 Declarative Turing Machine specification and execution framework using C++26 annotation reflection.
 
+Requires C++26 reflection support.
+At the time of writing this requires Bloomberg's [P2996 experimental compiler](https://github.com/bloomberg/clang-p2996). 
+
 An example configuration is given in 'src/unary_to_binary.cpp'.
 This implements a unary to binary conversion (e.g. '00000' -> '101') based on an old specification I wrote with some changes to allow for halting behaviour.
 The full specification is given here, there may be mistakes and/or variable quality, I haven't checked it.
