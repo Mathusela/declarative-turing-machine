@@ -4,9 +4,48 @@ Declarative Turing Machine specification and execution framework using C++26 ann
 Requires C++26 reflection support.
 At the time of writing this requires Bloomberg's [P2996 experimental compiler](https://github.com/bloomberg/clang-p2996). 
 
-An example configuration is given in 'src/unary_to_binary.cpp'.
-This implements a unary to binary conversion (e.g. '00000' -> '101') based on an old specification I wrote with some changes to allow for halting behaviour.
-The full specification is given here, there may be mistakes and/or variable quality, I haven't checked it.
+Two example configurations are given: 'src/unary_to_binary.cpp', and 'src/flip_least_significant.cpp'.
+### Flip Least Significant
+A small example of a Turing Machine that flips the least significant bit of its input (e.g. '10110' -> '10100').
+
+The configuration from this example is included here as a minimal syntax example:
+```cpp
+enum class Symbol {
+	_,
+	E,
+	_0,
+	_1
+};
+
+using enum Symbol;
+using enum Action;
+
+enum class [[=Config<Symbol>{"PrependEmpty", E, _}]] FlipLeastSignificant {
+	PrependEmpty [[=RL<Symbol,
+		{_0, E, Right, "ShiftRight_0"},
+		{_1, E, Right, "ShiftRight_1"},
+		{E, _, Halt, "PrependEmpty"}
+	>]],
+	ShiftRight_0 [[=RL<Symbol,
+		{_0, _0, Right, "ShiftRight_0"},
+		{_1, _0, Right, "ShiftRight_1"},
+		{E, _0, Left, "ReverseScan"}
+	>]],
+	ShiftRight_1 [[=RL<Symbol,
+		{_0, _1, Right, "ShiftRight_0"},
+		{_1, _1, Right, "ShiftRight_1"},
+		{E, _1, Left, "ReverseScan"}
+	>]],
+	ReverseScan [[=RL<Symbol,
+		{_1, _0, Halt, "ReverseScan"},
+		{E, _, Halt, "ReverseScan"},
+		{_, _, Left, "ReverseScan"}
+	>]],
+};
+```
+### Unary to Binary
+This implements a unary to binary conversion (e.g. '00000' -> '101') based on an old specification I wrote, with some changes to allow for halting behaviour.
+The full specification is given here, there may be mistakes and it may be of variable quality, I haven't checked it thoroughly.
 ```
 =============================================
 ; ALGORITHM
