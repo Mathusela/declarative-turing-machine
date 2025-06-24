@@ -14,10 +14,6 @@
 #include <utility>
 #include <print>
 
-// TODO: Config
-// TODO: Response
-// TODO: Action
-
 template <typename StateDescriptor, typename Symbol>
 class TuringMachine {
 	std::vector<Symbol> tape_;
