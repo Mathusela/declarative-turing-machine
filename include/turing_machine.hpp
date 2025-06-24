@@ -52,16 +52,30 @@ class TuringMachine {
 	}
 
 public:
-	constexpr TuringMachine() {
+	constexpr void reset() {
 		constexpr auto annotation = annotation_of<Config<Symbol>>(^^StateDescriptor);
 		if constexpr (!annotation.has_value())
 			throw std::runtime_error("Expected Config");
 		state_ = name_to_enum<StateDescriptor>(annotation->startStateName).value();
 		emptySymbol_ = annotation->emptySymbol;
 		anySymbol_ = annotation->anySymbol;
-		
+
+		tape_.clear();
 		tape_.resize(1, emptySymbol_);
 		head_ = tape_.begin();
+	}
+
+	constexpr TuringMachine() {
+		// constexpr auto annotation = annotation_of<Config<Symbol>>(^^StateDescriptor);
+		// if constexpr (!annotation.has_value())
+		// 	throw std::runtime_error("Expected Config");
+		// state_ = name_to_enum<StateDescriptor>(annotation->startStateName).value();
+		// emptySymbol_ = annotation->emptySymbol;
+		// anySymbol_ = annotation->anySymbol;
+		
+		// tape_.resize(1, emptySymbol_);
+		// head_ = tape_.begin();
+		reset();
 	}
 
 	[[nodiscard]] constexpr std::span<Symbol> execute(std::optional<std::vector<Symbol>> input = std::nullopt, bool printStates = false) {
