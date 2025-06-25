@@ -62,15 +62,6 @@ public:
 	}
 
 	constexpr TuringMachine() {
-		// constexpr auto annotation = annotation_of<Config<Symbol>>(^^StateDescriptor);
-		// if constexpr (!annotation.has_value())
-		// 	throw std::runtime_error("Expected Config");
-		// state_ = name_to_enum<StateDescriptor>(annotation->startStateName).value();
-		// emptySymbol_ = annotation->emptySymbol;
-		// anySymbol_ = annotation->anySymbol;
-		
-		// tape_.resize(1, emptySymbol_);
-		// head_ = tape_.begin();
 		reset();
 	}
 
