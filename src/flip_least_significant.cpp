@@ -12,22 +12,22 @@ using enum Symbol;
 using enum Action;
 
 enum class [[=Config<Symbol>{"PrependEmpty", E, _}]] FlipLeastSignificant {
-	PrependEmpty [[=RL<Symbol,
+	PrependEmpty [[=RL<FlipLeastSignificant,
 		{_0, E, Right, "ShiftRight_0"},
 		{_1, E, Right, "ShiftRight_1"},
 		{E, _, Halt, "PrependEmpty"}
 	>]],
-	ShiftRight_0 [[=RL<Symbol,
+	ShiftRight_0 [[=RL<FlipLeastSignificant,
 		{_0, _0, Right, "ShiftRight_0"},
 		{_1, _0, Right, "ShiftRight_1"},
 		{E, _0, Left, "ReverseScan"}
 	>]],
-	ShiftRight_1 [[=RL<Symbol,
+	ShiftRight_1 [[=RL<FlipLeastSignificant,
 		{_0, _1, Right, "ShiftRight_0"},
 		{_1, _1, Right, "ShiftRight_1"},
 		{E, _1, Left, "ReverseScan"}
 	>]],
-	ReverseScan [[=RL<Symbol,
+	ReverseScan [[=RL<FlipLeastSignificant,
 		{_1, _0, Halt, "ReverseScan"},
 		{E, _, Halt, "ReverseScan"},
 		{_, _, Left, "ReverseScan"}
@@ -35,12 +35,9 @@ enum class [[=Config<Symbol>{"PrependEmpty", E, _}]] FlipLeastSignificant {
 };
 
 int main() {
-	TuringMachine<FlipLeastSignificant, Symbol> tm{};
-	std::println("{}", tm.execute(std::vector{_1, _0, _1, _1, _0}) | std::views::transform(enum_to_string<Symbol>));
-	
-	tm.reset();
-	std::println("{}", tm.execute(std::vector{_0, _1, _0, _1, _0}) | std::views::transform(enum_to_string<Symbol>));
-	
-	tm.reset();
-	std::println("{}", tm.execute(std::vector{_0, _0, _0, _0, _0}) | std::views::transform(enum_to_string<Symbol>));
+	// TODO: Change signature to allow for deduction of input
+	TuringMachine<FlipLeastSignificant> tm{};
+	std::println("{}", tm.execute({_1, _0, _1, _1, _0}) | std::views::transform(state_variant_to_string));
+	std::println("{}", tm.execute({_0, _1, _0, _1, _0}) | std::views::transform(state_variant_to_string));
+	std::println("{}", tm.execute({_0, _0, _0, _0, _0}) | std::views::transform(state_variant_to_string));
 }

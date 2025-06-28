@@ -14,6 +14,15 @@ consteval std::optional<T> annotation_of(std::meta::info x) {
 	return std::nullopt;
 }
 
+consteval bool has_templated_annotation(std::meta::info x, std::meta::info templatedAnnotation) {
+    for (std::meta::info a : annotations_of(x)) {
+        std::meta::info type = type_of(a);
+        if (has_template_arguments(type) && template_of(type) == templatedAnnotation)
+            return true;
+	}
+	return false;
+}
+
 template <typename E>
 	requires(std::is_enum_v<E>)
 [[nodiscard]] constexpr std::optional<E> name_to_enum(std::string_view str) noexcept {
@@ -33,6 +42,20 @@ template <typename E>
 	return "";
 }
 
+template <typename E>
+[[nodiscard]] constexpr std::string_view get_scope_string(E x) {
+	if constexpr (is_class_member(^^E))
+		return display_string_of(parent_of(^^E));
+	else
+		return display_string_of(^^E);
+}
+
+constexpr inline auto state_variant_to_string = [](auto stateVariant) {
+	return std::visit([](auto state) {
+		return enum_to_string(state);
+	}, stateVariant);
+};
+
 namespace structural {
     struct StringView {
         const char* data;
@@ -51,6 +74,16 @@ namespace structural {
             return {data, size};
         }
     };
+}
+
+namespace checked {
+    consteval bool is_enum_type(std::meta::info refl) {
+        if (is_type(refl)) {
+            if (std::meta::is_enum_type(refl))
+                return true;
+        }
+        return false;
+    }
 }
 
 #endif // UTILITY_HPP
