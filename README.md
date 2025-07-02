@@ -1,14 +1,105 @@
 # declarative-turing-machine
-Declarative Turing Machine specification and execution framework using C++26 annotation reflection.
+Declarative Turing Machine specification and execution framework with skeleton table support, using C++26 annotation reflection.
 
 Requires C++26 reflection support.
 At the time of writing this requires Bloomberg's [P2996 experimental compiler](https://github.com/bloomberg/clang-p2996). 
 
-Two example configurations are given: 'src/unary_to_binary.cpp', and 'src/flip_least_significant.cpp'.
-### Flip Least Significant
-A small example of a Turing Machine that flips the least significant bit of its input (e.g. '10110' -> '10100').
+## Features
+- Declarative Turing Machine definition syntax that aims to closely mirror Turing's notation.
+- Parameterised skeleton tables.
+  - Allows for parametrisation on scoped state references to link between machines and provide exit points.
+- Cross machine linking with heterogeneous states and symbols.
+  - > NOTE: While heterogeneous symbols are supported by the implementation (symbols are stored as variants of reachable symbol types), currently I don't know how empty symbols should work in heterogeneous systems so this has no real utility.
+- Compile time reachability analysis to allow for type safe heterogeneous storage at runtime.
 
-The configuration from this example is included here as a minimal syntax example:
+## Syntax
+
+### Symbols
+Symbols are defined by user provided enums:
+```cpp
+enum class Symbol {
+	_,
+	E,
+	_0,
+	_1,
+	X,
+	Y
+};
+```
+
+### Machines
+Machines are also defined on enums. They can either be defined on top level enums/enum classes, or on class member enums (not enum classes!).
+
+> NOTE: Enum classes can be used for class member enums by forcing instantiation (using a state enum value) before trying to construct a TuringMachine, but this is error prone so not recommended.
+
+- For concrete (non-parameterised) machines you may use either top level or class member enums.
+- For parameterised machines you must use class member enums; we template the top level class with any parameters.
+
+### Parameterised Machines
+Parameterised machines are defined on class member enums.
+Their wrapping class is templated on any parameters; states can be captured using the provided StateRef type.
+
+```cpp
+using enum Symbol;
+using enum Action;
+
+template <StateRef s>
+struct PrintX {
+	enum [[=Config<Symbol>{"Print", E, _}]] State {
+		Print [[=RL<State,
+			{_, X, None, s}
+		>]]
+	};
+};
+
+template <StateRef s>
+struct PrintY {
+	enum [[=Config<Symbol>{"Print", E, _}]] State {
+		Print [[=RL<State,
+			{_, Y, None, s}
+		>]]
+	};
+};
+
+enum class [[=Config<Symbol>{"Start", E, _}]] Marker {
+	Start [[=RL<Marker,
+		{_0, _, Right, Call<PrintX, "End">},
+		{_1, _, Right, Call<PrintY, "End">},
+		{_, _, Halt, "End"}
+	>]],
+	End [[=RL<Marker,
+		{_, _, Halt, "End"}
+	>]]
+};
+```
+
+### Annotations and Transitions
+A state enum must be marked with a `Config` annotation, which takes the form `Config<SymbolEnum>(startStateName, emptySymbol, anySymbol)`.
+
+States are defined on enum variants and must be decorated with an `RL` (Response List) annotation.
+The first parameter of each `RL` annotation must be the enclosing enum (not class) type.
+Following this should be any transitions, which take the form `{read, write, action, nextState}`.
+
+The provided 'anySymbol' has a special meaning in transitions:
+- For read symbols: matches any symbol.
+- For write symbols: writes back the read symbol (does not write).
+  
+Transitions are matched from top to bottom (i.e. an any symbol read can be used as a default case if provided last).
+
+### Calling Machines
+Sub-machines can be called as a 'next state', this jumps to the start state of the provided machine.
+- Parameterised machines can be called using `Call<Machine, args...>`.
+  - Supports nested calls, referenced state names refer to the calling scope.
+- Concrete (non-parameterised) machines can be called using `CCall<Machine>` (Concrete Call).
+
+## Examples
+Examples are given in the '[src/](src/)' directory.
+
+### Flip Least Significant ('[src/flip_least_significant.cpp](src/flip_least_significant.cpp)')
+A small Turing Machine that flips the least significant bit of its input (e.g. '10110' -> '10100').
+
+Does not use skeleton tables.
+The configuration is included here as a minimal syntax example:
 ```cpp
 enum class Symbol {
 	_,
@@ -43,8 +134,12 @@ enum class [[=Config<Symbol>{"PrependEmpty", E, _}]] FlipLeastSignificant {
 	>]],
 };
 ```
-### Unary to Binary
+### Unary to Binary ('[src/unary_to_binary_skeleton.cpp](src/unary_to_binary_skeleton.cpp)', '[src/unary_to_binary_flattened.cpp](src/unary_to_binary_flattened.cpp)')
 This implements a unary to binary conversion (e.g. '00000' -> '101') based on an old specification I wrote, with some changes to allow for halting behaviour.
+
+- '[src/unary_to_binary_skeleton.cpp](src/unary_to_binary_skeleton.cpp)': The up-to-date version making use of skeleton tables (very close to the specification).
+- '[src/unary_to_binary_flattened.cpp](src/unary_to_binary_flattened.cpp)': A version from before skeleton table support implemented as a single monolithic machine, included for comparison.
+
 The full specification is given here, there may be mistakes and it may be of variable quality, I haven't checked it thoroughly.
 ```
 =============================================
