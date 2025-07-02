@@ -16,6 +16,7 @@
 #include <set>
 #include <concepts>
 #include <variant>
+#include <algorithm>
 
 namespace impl {
 	template <typename T>
